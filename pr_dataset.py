@@ -167,20 +167,37 @@ def __sharpen_image(data):
     return sharp_images
 
 
-def get_preprocessed_dataset():
+def get_preprocessed_dataset(plot=False):
     (labels, sizes, data) = __get_raw_pr_dataset()
 
     data = __get_squared_dataset(sizes, data)
 
-    # plot_image(data[0], 1, 3, 1)
+    if plot:
+        plot_image(data[0], 1, 3, 1)
 
     data = __deskew(data)
 
-    # plot_image(data[0], 1, 3, 2)
+    if plot:
+        plot_image(data[0], 1, 3, 2)
 
     data = __sharpen_image(data)
-    # plot_image(data[0], 1, 3, 3)
-    # plt.show()
+
+    if plot:
+        plot_image(data[0], 1, 3, 3)
+        plt.show()
 
     size_tuple = (DESIRED_SQUARE_SIZE, DESIRED_SQUARE_SIZE)
     return labels, data, size_tuple
+
+
+def save_dataset_to_csv():
+    labels, data, size_tuple = get_preprocessed_dataset()
+    full_data = np.zeros((labels.shape[0], 1 + data.shape[1]), np.int32)
+    full_data[:, 0] = labels[:]
+    full_data[:, 1:] = data.astype(int)
+    np.savetxt("data/preprocessed_30.csv", full_data, delimiter=",", fmt='%d')
+    print('saved to csv')
+
+
+# get_preprocessed_dataset(True)
+save_dataset_to_csv()
