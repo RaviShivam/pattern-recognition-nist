@@ -10,13 +10,11 @@ import numpy as np
 import pandas as pd
 
 
-def get_pr_dataset():
+def get_raw_pr_dataset():
     df = pd.read_csv('file2.csv', sep=',')
 
     rawData = np.array(df.values)
     np.random.shuffle(rawData)
-
-    nb_classes = 10
 
     labels = rawData[:, 0]
     sizes = rawData[:, (1, 2)]
@@ -47,7 +45,7 @@ def get_pr_dataset():
 
     plt.show()
 
-    # return (x_train, y_train), (x_test, y_test)
+    return labels, sizes, data
 
 
-get_pr_dataset()
+get_raw_pr_dataset()
