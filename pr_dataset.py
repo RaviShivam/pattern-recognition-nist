@@ -195,7 +195,7 @@ def save_dataset_to_csv():
     full_data = np.zeros((labels.shape[0], 1 + data.shape[1]), np.int32)
     full_data[:, 0] = labels[:]
     full_data[:, 1:] = data.astype(int)
-    np.savetxt("preprocessed_30.csv", full_data, delimiter=",", fmt='%d')
+    np.savetxt("data/preprocessed_30.csv", full_data, delimiter=",", fmt='%d')
     print('saved to csv')
 
 
