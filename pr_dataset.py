@@ -11,17 +11,25 @@ import numpy as np
 import pandas as pd
 
 DESIRED_SQUARE_SIZE = 30
+PIXEL_THRESHOLD = 0.6
+
+
+def plot_image(data_to_display, rows, cells, index, size=DESIRED_SQUARE_SIZE):
+    img = data_to_display
+    img = img.reshape(size, size)
+    plt.subplot(rows, cells, index)
+    plt.imshow(img, cmap='gray', interpolation='none')
 
 
 def __get_raw_pr_dataset():
     df = pd.read_csv('file2.csv', sep=',')
 
-    rawData = np.array(df.values)
-    np.random.shuffle(rawData)
+    raw_data = np.array(df.values)
+    np.random.shuffle(raw_data)
 
-    labels = rawData[:, 0]
-    sizes = rawData[:, (1, 2)]
-    original_data = rawData[:, 3:]
+    labels = raw_data[:, 0]
+    sizes = raw_data[:, (1, 2)]
+    original_data = raw_data[:, 3:]
     data = np.empty(original_data.shape)
 
     for (i, row) in enumerate(original_data):
@@ -51,7 +59,7 @@ def __get_raw_pr_dataset():
     return labels, sizes, data
 
 
-def __get_squared_dataset(labels, sizes, data):
+def __get_squared_dataset(sizes, data):
     new_data = np.zeros((data.shape[0], DESIRED_SQUARE_SIZE ** 2))
 
     for (i, flat_img) in enumerate(data):
@@ -105,11 +113,74 @@ def __get_squared_dataset(labels, sizes, data):
         scaled_img = scaled_img.flatten()
         new_data[i] = scaled_img
 
-    return labels, new_data
+    return new_data
 
 
-(labels, sizes, data) = __get_raw_pr_dataset()
+def __deskew(data):
+    skew_data = np.zeros((data.shape[0], DESIRED_SQUARE_SIZE * DESIRED_SQUARE_SIZE))
 
-(labels, data) = __get_squared_dataset(labels, sizes, data)
-plt.imshow(data[1].reshape(DESIRED_SQUARE_SIZE, DESIRED_SQUARE_SIZE), cmap='gray', interpolation='none')
-plt.show()
+    for (i, img) in enumerate(data):
+        img = img[0:(DESIRED_SQUARE_SIZE * DESIRED_SQUARE_SIZE)]
+        img = img.reshape(DESIRED_SQUARE_SIZE, DESIRED_SQUARE_SIZE)
+
+        moments = cv2.moments(img)
+        if abs(moments['mu02']) < 1e-2:
+            return img.copy()
+        skew = moments['mu11'] / moments['mu02']
+        moments = np.float32([[1, skew, -0.5 * DESIRED_SQUARE_SIZE * skew], [0, 1, 0]])
+        img = cv2.warpAffine(img, moments, (DESIRED_SQUARE_SIZE, DESIRED_SQUARE_SIZE),
+                             flags=cv2.WARP_INVERSE_MAP)
+
+        img = img.flatten()
+        skew_data[i, 0:img.shape[0]] = img
+
+    return skew_data
+
+
+def __sharpen_image(data):
+    sharp_images = np.zeros(data.shape)
+
+    for (i, xxx) in enumerate(data):
+        img = data[i]
+
+        img = img.reshape(DESIRED_SQUARE_SIZE, DESIRED_SQUARE_SIZE)
+        # plot_image(img, 1, 4, 1)
+        tmp_size = DESIRED_SQUARE_SIZE * 6
+        img = cv2.resize(img, (tmp_size, tmp_size))
+        # img = cv2.blur(img, (5, 5))
+        img = cv2.GaussianBlur(img, (25, 25), 0)
+        # plot_image(img, 1, 4, 2, size=tmp_size)
+        img = cv2.resize(img, (DESIRED_SQUARE_SIZE, DESIRED_SQUARE_SIZE))
+
+        # plot_image(img, 1, 4, 3)
+
+        img = img.flatten()
+        for (j, row) in enumerate(img):
+            img[j] = 1 if img[j] > PIXEL_THRESHOLD else 0
+
+        # plot_image(img, 1, 4, 4)
+        # plt.show()
+
+        sharp_images[i] = img
+    # plot_image(sharp_images[1], 1, 1, 1)
+    # plt.show()
+    return sharp_images
+
+
+def get_preprocessed_dataset():
+    (labels, sizes, data) = __get_raw_pr_dataset()
+
+    data = __get_squared_dataset(sizes, data)
+
+    # plot_image(data[0], 1, 3, 1)
+
+    data = __deskew(data)
+
+    # plot_image(data[0], 1, 3, 2)
+
+    data = __sharpen_image(data)
+    # plot_image(data[0], 1, 3, 3)
+    # plt.show()
+
+    size_tuple = (DESIRED_SQUARE_SIZE, DESIRED_SQUARE_SIZE)
+    return labels, data, size_tuple
