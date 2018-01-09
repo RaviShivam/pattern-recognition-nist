@@ -20,16 +20,27 @@ def get_pr_dataset():
 
     labels = rawData[:, 0]
     sizes = rawData[:, (1, 2)]
-    data = rawData[:, 3:]
-    print(data.shape)
+    original_data = rawData[:, 3:]
+    data = np.empty(original_data.shape)
+
+    for (i, row) in enumerate(original_data):
+        size = sizes[i]
+        row = row[0:(size[0] * size[1])]
+        # reshaping to rectangle shape
+        row = row.reshape(size[1], size[0])
+        row = np.rot90(row, 3)
+        row = np.flip(row, 1)
+        row = row.flatten()
+        data[i, 0:row.shape[0]] = row
+
+    print(data[1].shape)
 
     for i in range(9):
         img = data[i]
         size = sizes[i]
-        # taking pixels from data that actually belong to the picture
         img = img[0:(size[0] * size[1])]
         # reshaping to rectangle shape
-        img = img.reshape(size[1], size[0])
+        img = img.reshape(size[0], size[1])
         plt.subplot(3, 3, i + 1)
         plt.imshow(img, cmap='gray', interpolation='none')
         plt.title("Class {}".format(labels[i]))
