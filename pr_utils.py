@@ -31,7 +31,7 @@ def get_train_dataset_10000():
     return X_train, y_train
 
 
-def get_test_dataset_100():
+def get_test_dataset_1000():
     df = pd.read_csv('data/processed_nist_data.csv', sep=',', header=None)
     df = df.sample(frac=1).reset_index(drop=True)  # shuffle data
     df = df.groupby(0)
