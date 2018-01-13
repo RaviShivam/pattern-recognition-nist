@@ -77,7 +77,7 @@ def get_test_dataset_1000():
 
 
 def get_test_features_dataset_1000():
-    df = pd.read_csv('data/im_features_nist_data.csv', sep=',', header=None)
+    df = pd.read_csv('data/im_features_nist_data.csv', sep=',')
     df = df.sample(frac=1).reset_index(drop=True)  # shuffle data
     df = df.groupby("label")
 
