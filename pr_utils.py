@@ -6,9 +6,6 @@ from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
-
-
-
 def get_train_dataset_100():
     df = pd.read_csv('data/processed_nist_data.csv', sep=',', header=None)
     df = df.sample(frac=1).reset_index(drop=True)  # shuffle data
@@ -116,6 +113,10 @@ def experimentPCA_fulldata(classifier, data, filename=None, show_results=False):
 
 def handle_plot(performance, show_results, filename):
     fig = plt.figure()
+    plt.title('Number of Components Retained vs Performance')
+    plt.xlabel('Number of Components')
+    plt.ylabel('Accuracy')
+
     plt.plot(performance.keys(), performance.values())
     if show_results:
         plt.show()
