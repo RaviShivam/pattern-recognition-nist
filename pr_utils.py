@@ -154,3 +154,8 @@ def handle_plot(performance, show_results, filename):
         pp = PdfPages("experiment-results/" + filename + ".pdf")
         pp.savefig(fig)
         pp.close()
+
+
+def to_csv(name, x):
+    df = pd.DataFrame(x)  # 1st row as the column names
+    df.to_csv(name, encoding='utf-8', index=False, sep=',', header=None)
