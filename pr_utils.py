@@ -7,7 +7,6 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
 
-# Deprecated
 def get_train_dataset_100():
     df = pd.read_csv('data/processed_nist_data.csv', sep=',', header=None)
     df = df.sample(frac=1).reset_index(drop=True)  # shuffle data
@@ -24,7 +23,6 @@ def get_train_dataset_100():
     return X_train, y_train
 
 
-# Deprecated
 def get_train_features_dataset_10000():
     df = pd.read_csv('data/im_features_nist_data.csv', sep=',')
 
@@ -38,7 +36,6 @@ def get_train_features_dataset_10000():
     return X_train, y_train
 
 
-# Deprecated
 def get_train_features_dataset_100():
     df = pd.read_csv('data/im_features_nist_data.csv', sep=',')
     df = df.sample(frac=1).reset_index(drop=True)  # shuffle data
@@ -55,7 +52,6 @@ def get_train_features_dataset_100():
     return X_train, y_train
 
 
-# Deprecated
 def get_train_dataset_10000():
     df = pd.read_csv('data/processed_nist_data.csv', sep=',', header=None)
 
@@ -69,7 +65,6 @@ def get_train_dataset_10000():
     return X_train, y_train
 
 
-# Deprecated
 def get_test_dataset_1000():
     df = pd.read_csv('data/processed_nist_data.csv', sep=',', header=None)
     df = df.sample(frac=1).reset_index(drop=True)  # shuffle data
@@ -86,7 +81,6 @@ def get_test_dataset_1000():
     return X_test, y_test
 
 
-# Deprecated
 def get_test_features_dataset_1000():
     df = pd.read_csv('data/im_features_nist_data.csv', sep=',')
     df = df.sample(frac=1).reset_index(drop=True)  # shuffle data
