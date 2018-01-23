@@ -2,84 +2,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
+from sklearn.decomposition import FastICA
 from sklearn.decomposition import PCA
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
-
-
-def get_train_dataset_100():
-    df = pd.read_csv('data/processed_nist_data.csv', sep=',', header=None)
-    df = df.sample(frac=1).reset_index(drop=True)  # shuffle data
-    df = df.groupby(0)
-    train_data = df.apply(lambda x: x.sample(frac=0.01))
-
-    raw_data = np.array(train_data)
-    labels = raw_data[:, 0]
-    data = raw_data[:, 1:]
-
-    X_train = data
-    y_train = labels
-
-    return X_train, y_train
-
-
-def get_train_features_dataset_10000():
-    df = pd.read_csv('data/im_features_nist_data.csv', sep=',')
-
-    raw_data = np.array(df)
-    labels = raw_data[:, 0]
-    data = raw_data[:, 1:]
-
-    X_train = data
-    y_train = labels
-
-    return X_train, y_train
-
-
-def get_train_features_dataset_100():
-    df = pd.read_csv('data/im_features_nist_data.csv', sep=',')
-    df = df.sample(frac=1).reset_index(drop=True)  # shuffle data
-    df = df.groupby("label")
-    train_data = df.apply(lambda x: x.sample(frac=0.01))
-
-    raw_data = np.array(train_data)
-    labels = raw_data[:, 0]
-    data = raw_data[:, 1:]
-
-    X_train = data
-    y_train = labels
-
-    return X_train, y_train
-
-
-def get_train_dataset_10000():
-    df = pd.read_csv('data/processed_nist_data.csv', sep=',', header=None)
-
-    raw_data = np.array(df)
-    labels = raw_data[:, 0]
-    data = raw_data[:, 1:]
-
-    X_train = data
-    y_train = labels
-
-    return X_train, y_train
-
-
-def get_test_dataset_1000():
-    df = pd.read_csv('data/processed_nist_data.csv', sep=',', header=None)
-    df = df.sample(frac=1).reset_index(drop=True)  # shuffle data
-    df = df.groupby(0)
-
-    test_data = df.apply(lambda x: x.sample(frac=0.1))
-
-    raw_data = np.array(test_data)
-    labels = raw_data[:, 0]
-    data = raw_data[:, 1:]
-    X_test = data
-    y_test = labels
-
-    return X_test, y_test
-
 
 def get_test_features_dataset_1000():
     df = pd.read_csv('data/im_features_nist_data.csv', sep=',')
@@ -96,52 +22,118 @@ def get_test_features_dataset_1000():
 
     return X_test, y_test
 
+def get_random_batch(dataframe, frac=0.01):
+    dataframe = dataframe.groupby(0)
+    trainset = dataframe.apply(lambda x: x.sample(frac=frac)).as_matrix()
+    validateset = dataframe.apply(lambda x: x.sample(frac=0.1)).as_matrix()
 
-def get_raw_pixels(full_data=True):
-    df = pd.read_csv('data/processed_nist_data.csv', sep=',', header=None)
-    if full_data:
-        df = df.as_matrix()
-        X, y = df[:, 1:], df[:, 0]
-        X_train, X_validate, y_train, y_validate = train_test_split(X, y, train_size=0.8, shuffle=True)
-    else:
-        df = df.sample(frac=1).reset_index(drop=True)  # shuffle data
-        df = df.groupby(0)
-        df100 = df.apply(lambda x: x.sample(frac=0.01)).as_matrix()
-        X_train, y_train = df100[:, 1:], df100[:, 0]
-        df1000 = df.apply(lambda x: x.sample(frac=0.1)).as_matrix()
-        X_validate, y_validate = df1000[:, 1:], df1000[:, 0]
+    X_train, y_train = trainset[:, 1:], trainset[:, 0]
+    X_validate, y_validate = validateset[:, 1:], validateset[:, 0]
+    return X_train, y_train, X_validate, y_validate
 
-    return X_train, X_validate, y_train, y_validate
+def get_full_data(dataframe):
+    df = dataframe.as_matrix()
+    return train_test_split(df[:, 1:], df[:, 0], test_size=0.2)
 
+def estimate_classifier_performance(classifier, X_test, y_test):
+    return accuracy_score(classifier.predict(X_test), y_test) * 100
+#
+# def _experimentPCA_batch(classifier, data_file):
+#     dataframe = pd.read_csv(data_file)
+#     p = []
+#     for _ in range(100):
+#         pca = PCA()
+#         train_set, test_set = get_random_batch(dataframe)
+#         pca.fit(train_set[:, 1:])
+#         optimal_components = np.argwhere(np.cumsum(pca.explained_variance_ratio_) > 0.9).flatten()[0]
+#
+# def _experimentPCA_full(classifier, data_file):
+#     dataframe = pd.read_csv(data_file)
+#     X_train, y_train, X_validate, y_validate = get_full_data(dataframe)
+#     pca = PCA().fit(X_train)
+#     optimal_components = np.argwhere(np.cumsum(pca.explained_variance_ratio_) > 0.9).flatten()[0]
+#
+#
+# def run_PCA_experiments(classifier, data_file, batch=False, n_components='auto')
+#     dataframe = pd.read_csv(data_file)
+#     if batch:
+#         X_train, X_validate, y_train, y_validate = get_full_data(dataframe)
+#     else:
+#         X_train, X_validate, y_train, y_validate = get_random_batch(dataframe)
+#
+#     performance = {}
+#     if n_components is 'auto':
+#         pca = PCA().fit(X_train)
+#         optimal_components = np.argwhere(np.cumsum(pca.explained_variance_ratio_) > 0.9).flatten()[0]
+#         classifier.fit(pca.fit_transform(X_train), y_train)
+#         performance[optimal_components] =
+#     else:
+#         for i in range(1, n_components)
+#
+#
+#
+#
+# def experimentPCA_fulldata(classifier, full_data=True, filename=None, show_results=False, n_comp_auto=False):
+#     performance = {}
+#
+#
+#     if not n_comp_auto:
+#         for n_comp in range(1, 30):
+#             print("processing c=", n_comp)
+#             pca = PCA(n_components=n_comp)
+#             classifier.fit(pca.fit_transform(X_train), y_train)
+#             performance[n_comp] = accuracy_score(y_validate, classifier.predict(pca.transform(X_validate))) * 100
+#         handle_plot(performance, show_results, filename)
+#     else:
+#         pca = PCA()
+#         pca.fit(X_train)
+#         variance = pca.explained_variance_
+#         n_comp = max(np.argwhere(variance > 0.9))[0]
+#         pca.n_components = n_comp
+#         classifier.fit(pca.fit_transform(X_train), y_train)
+#         performance[0] = accuracy_score(y_validate, classifier.predict(pca.transform(X_validate))) * 100
+#
+#     return performance, n_comp
+#
+#
+# def run_experiment_PCA(classifier, data_file, max_components = 20, batch=False, save_to_file=False, show_results=False):
+#     dataframe = pd.read_csv(data_file)
+#     performance = {}
+#     for c in range(1, max_components):
+#         if batch:
+#             for _ in range(100):
+#                 X_train, X_validate, y_train, y_validate = get_random_batch(dataframe)
+#         else:
+#             X_train, X_validate, y_train, y_validate = get_full_data(dataframe)
+#             _run_PCA(data)
+#         performance
+#
+#     performance = {}
+#
 
-def experimentPCA_fulldata(classifier, full_data=True, filename=None, show_results=False, n_comp_auto=False):
+def run_experiment_ICA(classifier, data_file, max_components = 20, batch=False,  show_results=False, save_to_file=False):
+    dataframe = pd.read_csv(data_file)
     performance = {}
+    for n in range(1, max_components):
+        if batch:
+            p = 0
+            for _ in range(100):
+                data = get_random_batch(dataframe)
+                ica = FastICA(n_components=n).fit(data[0])
+                p += estimate_classifier_performance(classifier.fit(ica.transform(data[0]), data[1]), ica.transform(data[2]), data[3])
+            performance[n] = p/100.0
 
-    if full_data:
-        X_train, X_validate, y_train, y_validate = get_raw_pixels(full_data=True)
-    else:
-        X_train, X_validate, y_train, y_validate = get_raw_pixels(full_data=False)
-
-    if not n_comp_auto:
-        for n_comp in range(1, 30):
-            print("processing c=", n_comp)
-            pca = PCA(n_components=n_comp)
-            classifier.fit(pca.fit_transform(X_train), y_train)
-            performance[n_comp] = accuracy_score(y_validate, classifier.predict(pca.transform(X_validate))) * 100
-        handle_plot(performance, show_results, filename)
-    else:
-        pca = PCA()
-        pca.fit(X_train)
-        variance = pca.explained_variance_
-        n_comp = max(np.argwhere(variance > 0.9))[0]
-        pca.n_components = n_comp
-        classifier.fit(pca.fit_transform(X_train), y_train)
-        performance[0] = accuracy_score(y_validate, classifier.predict(pca.transform(X_validate))) * 100
-
-    return performance, n_comp
+        else:
+            data = get_full_data(dataframe)
+            ica = FastICA(n_components=n).fit(data[0])
+            performance[n]= estimate_classifier_performance(classifier.fit(ica.transform(data[0]), data[1]), ica.transform(data[2]), data[3])
+    handle_plot(performance, show_results, save_to_file)
+    return performance
 
 
-def handle_plot(performance, show_results, filename):
+
+
+def handle_plot(performance, show_results, save_to_file):
     fig = plt.figure()
     plt.title('Number of Components Retained vs Performance')
     plt.xlabel('Number of Components')
@@ -150,7 +142,7 @@ def handle_plot(performance, show_results, filename):
     plt.plot(performance.keys(), performance.values())
     if show_results:
         plt.show()
-    if filename:
-        pp = PdfPages("experiment-results/" + filename + ".pdf")
+    if save_to_file:
+        pp = PdfPages("experiment-results/" + save_to_file + ".pdf")
         pp.savefig(fig)
         pp.close()
