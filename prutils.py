@@ -7,6 +7,7 @@ from multiprocessing import Pool
 from matplotlib.backends.backend_pdf import PdfPages
 from sklearn.decomposition import FastICA
 from sklearn.decomposition import PCA
+from sklearn.decomposition import KernelPCA
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from multiprocessing import Pool
@@ -99,7 +100,6 @@ def _single_ICA(n, classifier, dataframe, batch):
         data = get_full_data(dataframe)
         ica = FastICA(n_components=n, max_iter=1000).fit(data[0], data[2])
         p = estimate_classifier_performance(classifier.fit(ica.transform(data[0]), data[2]), ica.transform(data[1]), data[3])
-    print "Done with component: {}".format(n)
     return (n, p)
 
 def run_ICA_experiment(classifier, data_file, max_components = 20, batch=False,  show_results=False, save_to_file=False):
@@ -112,6 +112,32 @@ def run_ICA_experiment(classifier, data_file, max_components = 20, batch=False, 
     handle_plot(performance, show_results, save_to_file)
     return performance
 
+"""
+Code for running KernelPCA
+"""
+def _single_KPCA(n, classifier, dataframe, batch):
+    if batch:
+        p = 0
+        for _ in range(100):
+            data = get_random_batch(dataframe)
+            kpca = KernelPCA(n_components=n).fit(data[0], data[2])
+            p += estimate_classifier_performance(classifier.fit(kpca.transform(data[0]), data[2]), kpca.transform(data[1]), data[3])
+        p = p/100.0
+    else:
+        data = get_full_data(dataframe)
+        kpca = KernelPCA(n_components=n).fit(data[0], data[2])
+        p = estimate_classifier_performance(classifier.fit(kpca.transform(data[0]), data[2]), kpca.transform(data[1]), data[3])
+    return (n, p)
+
+def run_KPCA_experiment(classifier, data_file, max_components = 20, batch=False,  show_results=False, save_to_file=False):
+    dataframe = pd.read_csv(data_file)
+    pool = Pool(mp.cpu_count())
+    single_run = partial(_single_KPCA, classifier=classifier, dataframe=dataframe, batch=batch)
+    performance = dict(pool.map(single_run, range(1, max_components)))
+    pool.close()
+    pool.join()
+    handle_plot(performance, show_results, save_to_file)
+    return performance
 
 """
 Handling experiment results
