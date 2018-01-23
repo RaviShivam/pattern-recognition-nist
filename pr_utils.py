@@ -7,22 +7,15 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
-def get_test_features_dataset_1000():
-    df = pd.read_csv('data/im_features_nist_data.csv', sep=',')
-    df = df.sample(frac=1).reset_index(drop=True)  # shuffle data
-    df = df.groupby("label")
-
-    test_data = df.apply(lambda x: x.sample(frac=0.1))
-
-    raw_data = np.array(test_data)
-    labels = raw_data[:, 0]
-    data = raw_data[:, 1:]
-    X_test = data
-    y_test = labels
-
-    return X_test, y_test
+def get_full_data(dataframe):
+    if type(dataframe) is not pd.core.frame.DataFrame:
+        dataframe = pd.read_csv(dataframe)
+    df = dataframe.as_matrix()
+    return train_test_split(df[:, 1:], df[:, 0], test_size=0.2)
 
 def get_random_batch(dataframe, frac=0.01):
+    if type(dataframe) is not pd.core.frame.DataFrame:
+        dataframe = pd.read_csv(dataframe)
     dataframe = dataframe.groupby("label")
     trainset = dataframe.apply(lambda x: x.sample(frac=frac)).as_matrix()
     validateset = dataframe.apply(lambda x: x.sample(frac=0.1)).as_matrix()
@@ -31,9 +24,6 @@ def get_random_batch(dataframe, frac=0.01):
     X_validate, y_validate = validateset[:, 1:], validateset[:, 0]
     return X_train, X_validate, y_train, y_validate
 
-def get_full_data(dataframe):
-    df = dataframe.as_matrix()
-    return train_test_split(df[:, 1:], df[:, 0], test_size=0.2)
 
 def estimate_classifier_performance(classifier, X_test, y_test):
     return accuracy_score(classifier.predict(X_test), y_test) * 100
@@ -124,7 +114,7 @@ def run_ICA_experiment(classifier, data_file, max_components = 20, batch=False, 
             performance[n] = p/100.0
         else:
             data = get_full_data(dataframe)
-            ica = FastICA(n_components=n).fit(data[0], data[2])
+            ica = FastICA(n_components=n, max_iter=1000).fit(data[0], data[2])
             performance[n]= estimate_classifier_performance(classifier.fit(ica.transform(data[0]), data[2]), ica.transform(data[1]), data[3])
     handle_plot(performance, show_results, save_to_file)
     return performance
