@@ -21,8 +21,12 @@ def plot_image(data_to_display, rows, cells, index, size=DESIRED_SQUARE_SIZE):
     plt.imshow(img, cmap='gray', interpolation='none')
 
 
-def __get_raw_pr_dataset():
-    df = pd.read_csv('file2.csv', sep=',')
+def __get_raw_pr_dataset(train_dataset=True):
+    if train_dataset:
+        df = pd.read_csv('file2.csv', sep=',')
+    else:
+        df = pd.read_csv('data/nist_eval.csv', sep=',')
+
 
     raw_data = np.array(df.values)
     np.random.shuffle(raw_data)
@@ -42,7 +46,7 @@ def __get_raw_pr_dataset():
         row = row.flatten()
         data[i, 0:row.shape[0]] = row
 
-    print(data[1].shape)
+    # print(data[1].shape)
 
     # for i in range(9):
     #     img = data[i]
@@ -167,8 +171,8 @@ def __sharpen_image(data):
     return sharp_images
 
 
-def get_preprocessed_dataset(plot=False):
-    (labels, sizes, data) = __get_raw_pr_dataset()
+def get_preprocessed_dataset(train_dataset=True, plot=False):
+    (labels, sizes, data) = __get_raw_pr_dataset(train_dataset)
 
     data = __get_squared_dataset(sizes, data)
 
@@ -190,14 +194,14 @@ def get_preprocessed_dataset(plot=False):
     return labels, data, size_tuple
 
 
-def save_dataset_to_csv():
-    labels, data, size_tuple = get_preprocessed_dataset()
+def save_dataset_to_csv(train_dataset=True):
+    labels, data, size_tuple = get_preprocessed_dataset(train_dataset=train_dataset)
     full_data = np.zeros((labels.shape[0], 1 + data.shape[1]), np.int32)
     full_data[:, 0] = labels[:]
     full_data[:, 1:] = data.astype(int)
-    np.savetxt("data/preprocessed_30.csv", full_data, delimiter=",", fmt='%d')
-    print('saved to csv')
+    np.savetxt("data/preprocessed_test_nist_data.csv", full_data, delimiter=",", fmt='%d')
+    print('saved to csv', full_data.shape)
 
 
 # get_preprocessed_dataset(True)
-save_dataset_to_csv()
+save_dataset_to_csv(train_dataset=False)
