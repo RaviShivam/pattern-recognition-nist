@@ -33,56 +33,6 @@ def get_random_batch(dataframe, frac=0.01):
 def estimate_classifier_performance(classifier, X_test, y_test):
     return accuracy_score(classifier.predict(X_test), y_test) * 100
 
-#
-# def _experimentPCA_full(classifier, data_file):
-#     dataframe = pd.read_csv(data_file)
-#     X_train, y_train, X_validate, y_validate = get_full_data(dataframe)
-#     pca = PCA().fit(X_train)
-#     optimal_components = np.argwhere(np.cumsum(pca.explained_variance_ratio_) > 0.9).flatten()[0]
-#
-#
-# def run_PCA_experiments(classifier, data_file, batch=False, n_components='auto')
-#     dataframe = pd.read_csv(data_file)
-#     if batch:
-#         X_train, X_validate, y_train, y_validate = get_full_data(dataframe)
-#     else:
-#         X_train, X_validate, y_train, y_validate = get_random_batch(dataframe)
-#
-#     performance = {}
-#     if n_components is 'auto':
-#         pca = PCA().fit(X_train)
-#         optimal_components = np.argwhere(np.cumsum(pca.explained_variance_ratio_) > 0.9).flatten()[0]
-#         classifier.fit(pca.fit_transform(X_train), y_train)
-#         performance[optimal_components] =
-#     else:
-#         for i in range(1, n_components)
-#
-#
-#
-#
-# def experimentPCA_fulldata(classifier, full_data=True, filename=None, show_results=False, n_comp_auto=False):
-#     performance = {}
-#
-#
-#     if not n_comp_auto:
-#         for n_comp in range(1, 30):
-#             print("processing c=", n_comp)
-#             pca = PCA(n_components=n_comp)
-#             classifier.fit(pca.fit_transform(X_train), y_train)
-#             performance[n_comp] = accuracy_score(y_validate, classifier.predict(pca.transform(X_validate))) * 100
-#         handle_plot(performance, show_results, filename)
-#     else:
-#         pca = PCA()
-#         pca.fit(X_train)
-#         variance = pca.explained_variance_
-#         n_comp = max(np.argwhere(variance > 0.9))[0]
-#         pca.n_components = n_comp
-#         classifier.fit(pca.fit_transform(X_train), y_train)
-#         performance[0] = accuracy_score(y_validate, classifier.predict(pca.transform(X_validate))) * 100
-#
-#     return performance, n_comp
-
-
 """
 Running PCA experiments
 """
