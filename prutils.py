@@ -43,6 +43,12 @@ def get_random_batch(dataframe, frac=0.01):
 """
 Classifier performance estimator
 """
+def estimate_classifier_performance(classifier, dataframe):
+    if type(dataframe) is not pd.core.frame.DataFrame:
+        dataframe = pd.read_csv(dataframe)
+    dataframe = dataframe.as_matrix()
+    return estimate_classifier_performance(classifier, dataframe[:, 1:], dataframe[:, 0])
+
 def estimate_classifier_performance(classifier, X_test, y_test):
     return accuracy_score(classifier.predict(X_test), y_test) * 100
 
@@ -131,10 +137,11 @@ def _single_KPCA(n, classifier, dataframe, batch):
 
 def run_KPCA_experiment(classifier, data_file, max_components = 20, batch=False,  show_results=False, save_to_file=False):
     dataframe = pd.read_csv(data_file)
-    performance = {}
+    performance = []
     single_run = partial(_single_KPCA, classifier=classifier, dataframe=dataframe, batch=batch)
     for c in range(1, max_components):
-        performance[c] = single_run(c)
+        performance.append(single_run(c))
+    performance = dict(performance)
     handle_plot(performance, show_results, save_to_file)
     return performance
 
