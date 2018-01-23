@@ -1,11 +1,17 @@
 import matplotlib.pyplot as plt
+
+import os
 import numpy as np
 import pandas as pd
+import multiprocessing as mp
+from multiprocessing import Pool
 from matplotlib.backends.backend_pdf import PdfPages
 from sklearn.decomposition import FastICA
 from sklearn.decomposition import PCA
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
+from multiprocessing import Pool
+from functools import partial
 
 def get_full_data(dataframe):
     if type(dataframe) is not pd.core.frame.DataFrame:
@@ -86,22 +92,7 @@ def estimate_classifier_performance(classifier, X_test, y_test):
 #     return performance, n_comp
 #
 #
-# def run_experiment_PCA(classifier, data_file, max_components = 20, batch=False, save_to_file=False, show_results=False):
-#     dataframe = pd.read_csv(data_file)
-#     performance = {}
-#     for c in range(1, max_components):
-#         if batch:
-#             for _ in range(100):
-#                 X_train, X_validate, y_train, y_validate = get_random_batch(dataframe)
-#         else:
-#             X_train, X_validate, y_train, y_validate = get_full_data(dataframe)
-#             _run_PCA(data)
-#         performance
-#
-#     performance = {}
-#
-
-def run_ICA_experiment(classifier, data_file, max_components = 20, batch=False,  show_results=False, save_to_file=False):
+def run_experiment_PCA(classifier, data_file, max_components = 40, batch=False, save_to_file=False, show_results=False):
     dataframe = pd.read_csv(data_file)
     performance = {}
     for n in range(1, max_components):
@@ -109,18 +100,43 @@ def run_ICA_experiment(classifier, data_file, max_components = 20, batch=False, 
             p = 0
             for _ in range(100):
                 data = get_random_batch(dataframe)
-                ica = FastICA(n_components=n, max_iter=1000).fit(data[0], data[2])
-                p += estimate_classifier_performance(classifier.fit(ica.transform(data[0]), data[2]), ica.transform(data[1]), data[3])
+                pca = PCA(n_components=n).fit(data[0], data[2])
+                p += estimate_classifier_performance(classifier.fit(pca.transform(data[0]), data[2]), transform.transform(data[1]), data[3])
             performance[n] = p/100.0
         else:
             data = get_full_data(dataframe)
-            ica = FastICA(n_components=n, max_iter=1000).fit(data[0], data[2])
-            performance[n]= estimate_classifier_performance(classifier.fit(ica.transform(data[0]), data[2]), ica.transform(data[1]), data[3])
+            pca = PCA(n_components=n).fit(data[0], data[2])
+            performance[n]= estimate_classifier_performance(classifier.fit(pca.transform(data[0]), data[2]), pca.transform(data[1]), data[3])
     handle_plot(performance, show_results, save_to_file)
     return performance
 
 
+"""
+Code for running ICAs
+"""
+def single_ICA(n, classifier, dataframe, batch):
+    if batch:
+        p = 0
+        for _ in range(100):
+            data = get_random_batch(dataframe)
+            ica = FastICA(n_components=n, max_iter=1000).fit(data[0], data[2])
+            p += estimate_classifier_performance(classifier.fit(ica.transform(data[0]), data[2]), ica.transform(data[1]), data[3])
+        return (n, p)
+    else:
+        data = get_full_data(dataframe)
+        ica = FastICA(n_components=n, max_iter=1000).fit(data[0], data[2])
+        p = estimate_classifier_performance(classifier.fit(ica.transform(data[0]), data[2]), ica.transform(data[1]), data[3])
+        return (n, p)
 
+def run_ICA_experiment(classifier, data_file, max_components = 20, batch=False,  show_results=False, save_to_file=False):
+    dataframe = pd.read_csv(data_file)
+    pool = Pool(mp.cpu_count())
+    single_run = partial(single_ICA, classifier=classifier, dataframe=dataframe, batch=batch)
+    pool.map(single_run, range(1, max_components))
+    pool.close()
+    pool.join()
+    handle_plot(performance, show_results, save_to_file)
+    return performance
 
 def handle_plot(performance, show_results, save_to_file):
     fig = plt.figure()
