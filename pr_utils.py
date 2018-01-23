@@ -12,6 +12,15 @@ from sklearn.model_selection import train_test_split
 from multiprocessing import Pool
 from functools import partial
 
+"""
+Dataset constants
+"""
+RAW_PIXELS_DATASET = "data/processed_nist_data.csv"
+IM_FEATURES_DATASET= "data/im_features_nist_data.csv"
+
+"""
+Dataset readers
+"""
 def get_full_data(dataframe):
     if type(dataframe) is not pd.core.frame.DataFrame:
         dataframe = pd.read_csv(dataframe)
@@ -30,22 +39,15 @@ def get_random_batch(dataframe, frac=0.01):
     return X_train, X_validate, y_train, y_validate
 
 
+"""
+Classifier performance estimator
+"""
 def estimate_classifier_performance(classifier, X_test, y_test):
     return accuracy_score(classifier.predict(X_test), y_test) * 100
 
 """
 Running PCA experiments
 """
-def run_PCA_auto(classifier, data_file, batch):
-    dataframe = pd.read_csv(data_file)
-    if batch:
-        data = get_random_batch(data_file)
-    else:
-        data = get_full_data(dataframe)
-    pca = PCA().fit(data[:, 1:])
-    optimal_components = np.argwhere(np.cumsum(pca.explained_variance_ratio_) > 0.9).flatten()[0]
-    return _single_PCA(optimal_components, classifier, dataframe, batch)
-
 def _single_PCA(n, classifier, dataframe, batch):
     if batch:
         p = 0
@@ -60,9 +62,19 @@ def _single_PCA(n, classifier, dataframe, batch):
         p = estimate_classifier_performance(classifier.fit(pca.transform(data[0]), data[2]), pca.transform(data[1]), data[3])
     return (n, p)
 
+def _run_PCA_auto(classifier, data_file, batch):
+    dataframe = pd.read_csv(data_file)
+    if batch:
+        data = get_random_batch(data_file)
+    else:
+        data = get_full_data(dataframe)
+    pca = PCA().fit(data[:, 1:])
+    optimal_components = np.argwhere(np.cumsum(pca.explained_variance_ratio_) > 0.9).flatten()[0]
+    return _single_PCA(optimal_components, classifier, dataframe, batch)
+
 def run_PCA_experiment(classifier, data_file, max_components = 40, batch=False, save_to_file=False, show_results=False):
     dataframe = pd.read_csv(data_file)
-    return run_PCA_auto(classifier, dataframe, batch) if max_components is 'auto'
+    return _run_PCA_auto(classifier, dataframe, batch) if max_components is 'auto'
     single_run = partial(_single_PCA, classifier=classifier, dataframe=dataframe, batch=batch)
     pool = Pool(mp.cpu_count())
     performance = dict(pool.map(single_run, range(1, max_components)))
