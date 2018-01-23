@@ -119,7 +119,7 @@ def run_ICA_experiment(classifier, data_file, max_components = 20, batch=False, 
             p = 0
             for _ in range(100):
                 data = get_random_batch(dataframe)
-                ica = FastICA(n_components=n).fit(data[0], data[2])
+                ica = FastICA(n_components=n, max_iter=1000).fit(data[0], data[2])
                 p += estimate_classifier_performance(classifier.fit(ica.transform(data[0]), data[2]), ica.transform(data[1]), data[3])
             performance[n] = p/100.0
         else:
