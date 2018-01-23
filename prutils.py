@@ -131,11 +131,10 @@ def _single_KPCA(n, classifier, dataframe, batch):
 
 def run_KPCA_experiment(classifier, data_file, max_components = 20, batch=False,  show_results=False, save_to_file=False):
     dataframe = pd.read_csv(data_file)
-    pool = Pool(mp.cpu_count())
+    performance = {}
     single_run = partial(_single_KPCA, classifier=classifier, dataframe=dataframe, batch=batch)
-    performance = dict(pool.map(single_run, range(1, max_components)))
-    pool.close()
-    pool.join()
+    for c in range(1, max_components):
+        performance[c] = single_run(c)
     handle_plot(performance, show_results, save_to_file)
     return performance
 
