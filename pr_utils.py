@@ -23,13 +23,13 @@ def get_test_features_dataset_1000():
     return X_test, y_test
 
 def get_random_batch(dataframe, frac=0.01):
-    dataframe = dataframe.groupby(0)
+    dataframe = dataframe.groupby("label")
     trainset = dataframe.apply(lambda x: x.sample(frac=frac)).as_matrix()
     validateset = dataframe.apply(lambda x: x.sample(frac=0.1)).as_matrix()
 
     X_train, y_train = trainset[:, 1:], trainset[:, 0]
     X_validate, y_validate = validateset[:, 1:], validateset[:, 0]
-    return X_train, y_train, X_validate, y_validate
+    return X_train, X_validate, y_train, y_validate
 
 def get_full_data(dataframe):
     df = dataframe.as_matrix()
@@ -111,7 +111,7 @@ def estimate_classifier_performance(classifier, X_test, y_test):
 #     performance = {}
 #
 
-def run_experiment_ICA(classifier, data_file, max_components = 20, batch=False,  show_results=False, save_to_file=False):
+def run_ICA_experiment(classifier, data_file, max_components = 20, batch=False,  show_results=False, save_to_file=False):
     dataframe = pd.read_csv(data_file)
     performance = {}
     for n in range(1, max_components):
@@ -119,14 +119,13 @@ def run_experiment_ICA(classifier, data_file, max_components = 20, batch=False, 
             p = 0
             for _ in range(100):
                 data = get_random_batch(dataframe)
-                ica = FastICA(n_components=n).fit(data[0])
-                p += estimate_classifier_performance(classifier.fit(ica.transform(data[0]), data[1]), ica.transform(data[2]), data[3])
+                ica = FastICA(n_components=n).fit(data[0], data[2])
+                p += estimate_classifier_performance(classifier.fit(ica.transform(data[0]), data[2]), ica.transform(data[1]), data[3])
             performance[n] = p/100.0
-
         else:
             data = get_full_data(dataframe)
-            ica = FastICA(n_components=n).fit(data[0])
-            performance[n]= estimate_classifier_performance(classifier.fit(ica.transform(data[0]), data[1]), ica.transform(data[2]), data[3])
+            ica = FastICA(n_components=n).fit(data[0], data[2])
+            performance[n]= estimate_classifier_performance(classifier.fit(ica.transform(data[0]), data[2]), ica.transform(data[1]), data[3])
     handle_plot(performance, show_results, save_to_file)
     return performance
 
