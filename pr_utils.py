@@ -32,15 +32,7 @@ def get_random_batch(dataframe, frac=0.01):
 
 def estimate_classifier_performance(classifier, X_test, y_test):
     return accuracy_score(classifier.predict(X_test), y_test) * 100
-#
-# def _experimentPCA_batch(classifier, data_file):
-#     dataframe = pd.read_csv(data_file)
-#     p = []
-#     for _ in range(100):
-#         pca = PCA()
-#         train_set, test_set = get_random_batch(dataframe)
-#         pca.fit(train_set[:, 1:])
-#         optimal_components = np.argwhere(np.cumsum(pca.explained_variance_ratio_) > 0.9).flatten()[0]
+
 #
 # def _experimentPCA_full(classifier, data_file):
 #     dataframe = pd.read_csv(data_file)
@@ -94,6 +86,16 @@ def estimate_classifier_performance(classifier, X_test, y_test):
 """
 Running PCA experiments
 """
+def run_PCA_auto(classifier, data_file, batch):
+    dataframe = pd.read_csv(data_file)
+    if batch:
+        data = get_random_batch(data_file)
+    else:
+        data = get_full_data(dataframe)
+    pca = PCA().fit(data[:, 1:])
+    optimal_components = np.argwhere(np.cumsum(pca.explained_variance_ratio_) > 0.9).flatten()[0]
+    return _single_PCA(optimal_components, classifier, dataframe, batch)
+
 def _single_PCA(n, classifier, dataframe, batch):
     if batch:
         p = 0
@@ -110,6 +112,7 @@ def _single_PCA(n, classifier, dataframe, batch):
 
 def run_PCA_experiment(classifier, data_file, max_components = 40, batch=False, save_to_file=False, show_results=False):
     dataframe = pd.read_csv(data_file)
+    return run_PCA_auto(classifier, dataframe, batch) if max_components is 'auto'
     single_run = partial(_single_PCA, classifier=classifier, dataframe=dataframe, batch=batch)
     pool = Pool(mp.cpu_count())
     performance = dict(pool.map(single_run, range(1, max_components)))
