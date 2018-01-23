@@ -16,19 +16,27 @@ from functools import partial
 """
 Dataset constants
 """
+# train data
 RAW_PIXELS_DATASET = "data/processed_nist_data.csv"
 IM_FEATURES_DATASET= "data/im_features_nist_data.csv"
+
+# test data
+RAW_PIXELS_TEST= "data/preprocessed_test_nist_data.csv"
+IM_FEATURES_TEST= ""
 
 """
 Dataset readers
 """
-def get_full_data(dataframe):
+def get_full_data(dataframe, split_validation=True):
     if type(dataframe) is not pd.core.frame.DataFrame:
         dataframe = pd.read_csv(dataframe)
     df = dataframe.as_matrix()
-    return train_test_split(df[:, 1:], df[:, 0], test_size=0.2)
+    if split_validation:
+        return train_test_split(df[:, 1:], df[:, 0], test_size=0.2)
+    else:
+        return df[:, 1:], df[:, 0]
 
-def get_random_batch(dataframe, frac=0.01):
+def get_random_batch(dataframe, split_validation=True, frac=0.01):
     if type(dataframe) is not pd.core.frame.DataFrame:
         dataframe = pd.read_csv(dataframe)
     dataframe = dataframe.groupby("label")
@@ -37,17 +45,23 @@ def get_random_batch(dataframe, frac=0.01):
 
     X_train, y_train = trainset[:, 1:], trainset[:, 0]
     X_validate, y_validate = validateset[:, 1:], validateset[:, 0]
-    return X_train, X_validate, y_train, y_validate
+    if split_validation:
+        return X_train, X_validate, y_train, y_validate
+    else:
+        return X_train, y_train
+
 
 
 """
 Classifier performance estimator
 """
-def estimate_classifier_performance(classifier, dataframe):
-    if type(dataframe) is not pd.core.frame.DataFrame:
-        dataframe = pd.read_csv(dataframe)
-    dataframe = dataframe.as_matrix()
-    return estimate_classifier_performance(classifier, dataframe[:, 1:], dataframe[:, 0])
+def estimate_classifier_performance_transform(classifier, dataframe, transformer):
+    X, y = get_full_data(dataframe, split_validation=False)
+    return estimate_classifier_performance(classifier, transformer.transform(X), y)
+
+def estimate_classifier_performance_normal(classifier, dataframe):
+    X, y = get_full_data(dataframe, split_validation=False)
+    return estimate_classifier_performance(classifier, X, y)
 
 def estimate_classifier_performance(classifier, X_test, y_test):
     return accuracy_score(classifier.predict(X_test), y_test) * 100
