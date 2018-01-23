@@ -1,9 +1,8 @@
 import matplotlib.pyplot as plt
-
-import os
 import numpy as np
 import pandas as pd
 import multiprocessing as mp
+
 from multiprocessing import Pool
 from matplotlib.backends.backend_pdf import PdfPages
 from sklearn.decomposition import FastICA
@@ -90,23 +89,32 @@ def estimate_classifier_performance(classifier, X_test, y_test):
 #         performance[0] = accuracy_score(y_validate, classifier.predict(pca.transform(X_validate))) * 100
 #
 #     return performance, n_comp
-#
-#
-def run_experiment_PCA(classifier, data_file, max_components = 40, batch=False, save_to_file=False, show_results=False):
-    dataframe = pd.read_csv(data_file)
-    performance = {}
-    for n in range(1, max_components):
-        if batch:
-            p = 0
-            for _ in range(100):
-                data = get_random_batch(dataframe)
-                pca = PCA(n_components=n).fit(data[0], data[2])
-                p += estimate_classifier_performance(classifier.fit(pca.transform(data[0]), data[2]), transform.transform(data[1]), data[3])
-            performance[n] = p/100.0
-        else:
-            data = get_full_data(dataframe)
+
+
+"""
+Running PCA experiments
+"""
+def _single_PCA(n, classifier, dataframe, batch):
+    if batch:
+        p = 0
+        for _ in range(100):
+            data = get_random_batch(dataframe)
             pca = PCA(n_components=n).fit(data[0], data[2])
-            performance[n]= estimate_classifier_performance(classifier.fit(pca.transform(data[0]), data[2]), pca.transform(data[1]), data[3])
+            p += estimate_classifier_performance(classifier.fit(pca.transform(data[0]), data[2]), transform.transform(data[1]), data[3])
+        p = p/100.0
+    else:
+        data = get_full_data(dataframe)
+        pca = PCA(n_components=n).fit(data[0], data[2])
+        p = estimate_classifier_performance(classifier.fit(pca.transform(data[0]), data[2]), pca.transform(data[1]), data[3])
+    return (n, p)
+
+def run_PCA_experiment(classifier, data_file, max_components = 40, batch=False, save_to_file=False, show_results=False):
+    dataframe = pd.read_csv(data_file)
+    single_run = partial(_single_PCA, classifier=classifier, dataframe=dataframe, batch=batch)
+    pool = Pool(mp.cpu_count())
+    performance = dict(pool.map(single_run, range(1, max_components)))
+    pool.close()
+    pool.join()
     handle_plot(performance, show_results, save_to_file)
     return performance
 
@@ -114,35 +122,41 @@ def run_experiment_PCA(classifier, data_file, max_components = 40, batch=False, 
 """
 Code for running ICAs
 """
-def single_ICA(n, classifier, dataframe, batch):
+def _single_ICA(n, classifier, dataframe, batch):
     if batch:
         p = 0
         for _ in range(100):
             data = get_random_batch(dataframe)
             ica = FastICA(n_components=n, max_iter=1000).fit(data[0], data[2])
             p += estimate_classifier_performance(classifier.fit(ica.transform(data[0]), data[2]), ica.transform(data[1]), data[3])
-        return (n, p)
+        p = p/100.0
     else:
         data = get_full_data(dataframe)
         ica = FastICA(n_components=n, max_iter=1000).fit(data[0], data[2])
         p = estimate_classifier_performance(classifier.fit(ica.transform(data[0]), data[2]), ica.transform(data[1]), data[3])
-        return (n, p)
+    print "Done with component: {}".format(n)
+    return (n, p)
 
 def run_ICA_experiment(classifier, data_file, max_components = 20, batch=False,  show_results=False, save_to_file=False):
     dataframe = pd.read_csv(data_file)
     pool = Pool(mp.cpu_count())
-    single_run = partial(single_ICA, classifier=classifier, dataframe=dataframe, batch=batch)
-    pool.map(single_run, range(1, max_components))
+    single_run = partial(_single_ICA, classifier=classifier, dataframe=dataframe, batch=batch)
+    performance = dict(pool.map(single_run, range(1, max_components)))
     pool.close()
     pool.join()
     handle_plot(performance, show_results, save_to_file)
     return performance
 
+
+"""
+Handling experiment results
+"""
 def handle_plot(performance, show_results, save_to_file):
     fig = plt.figure()
     plt.title('Number of Components Retained vs Performance')
     plt.xlabel('Number of Components')
     plt.ylabel('Accuracy (%)')
+    plt.ylim(0, 100)
 
     plt.plot(performance.keys(), performance.values())
     if show_results:
