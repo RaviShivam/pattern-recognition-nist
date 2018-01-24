@@ -122,7 +122,7 @@ def _single_ICA(n, classifier, dataframe, batch):
         p = estimate_classifier_performance(classifier.fit(ica.transform(data[0]), data[2]), ica.transform(data[1]), data[3])
     return (n, p)
 
-def run_ICA_experiment(classifier, data_file, max_components = 20, batch=False,  show_results=False, save_to_file=False):
+def run_ICA_experiment(classifier, data_file, max_components = 20, batch=False):
     dataframe = pd.read_csv(data_file)
     max_components = min(len(dataframe.columns)-1, max_components)
     pool = Pool(mp.cpu_count())
@@ -130,7 +130,6 @@ def run_ICA_experiment(classifier, data_file, max_components = 20, batch=False, 
     performance = dict(pool.map(single_run, range(1, max_components)))
     pool.close()
     pool.join()
-    handle_plot(performance, show_results, save_to_file)
     return performance
 
 """
@@ -150,7 +149,7 @@ def _single_KPCA(n, classifier, dataframe, batch):
         p = estimate_classifier_performance(classifier.fit(kpca.transform(data[0]), data[2]), kpca.transform(data[1]), data[3])
     return (n, p)
 
-def run_KPCA_experiment(classifier, data_file, max_components = 20, batch=False,  show_results=False, save_to_file=False):
+def run_KPCA_experiment(classifier, data_file, max_components = 20, batch=False):
     dataframe = pd.read_csv(data_file)
     performance = []
     max_components = min(len(dataframe.columns)-1, max_components)
@@ -158,7 +157,6 @@ def run_KPCA_experiment(classifier, data_file, max_components = 20, batch=False,
     for c in range(1, max_components):
         performance.append(single_run(c))
     performance = dict(performance)
-    handle_plot(performance, show_results, save_to_file)
     return performance
 
 """
