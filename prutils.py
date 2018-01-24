@@ -75,7 +75,7 @@ def _single_PCA(n, classifier, dataframe, batch):
         for _ in range(100):
             data = get_random_batch(dataframe)
             pca = PCA(n_components=n).fit(data[0], data[2])
-            p += estimate_classifier_performance(classifier.fit(pca.transform(data[0]), data[2]), transform.transform(data[1]), data[3])
+            p += estimate_classifier_performance(classifier.fit(pca.transform(data[0]), data[2]), pca.transform(data[1]), data[3])
         p = p/100.0
     else:
         data = get_full_data(dataframe)
