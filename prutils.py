@@ -92,7 +92,7 @@ def _run_PCA_auto(classifier, dataframe, batch):
     optimal_components = np.argwhere(np.cumsum(pca.explained_variance_ratio_) > 0.9).flatten()[0]
     return _single_PCA(optimal_components, classifier, dataframe, batch)
 
-def run_PCA_experiment(classifier, data_file, max_components = 40, batch=False, save_to_file=False, show_results=False):
+def run_PCA_experiment(classifier, data_file, max_components = 40, batch=False):
     dataframe = pd.read_csv(data_file)
     if max_components is 'auto':
         return _run_PCA_auto(classifier, dataframe, batch)
@@ -102,7 +102,6 @@ def run_PCA_experiment(classifier, data_file, max_components = 40, batch=False, 
     performance = dict(pool.map(single_run, range(1, max_components)))
     pool.close()
     pool.join()
-    handle_plot(performance, show_results, save_to_file)
     return performance
 
 
@@ -165,19 +164,20 @@ def run_KPCA_experiment(classifier, data_file, max_components = 20, batch=False,
 """
 Handling experiment results
 """
-def handle_plot(performance, show_results, save_to_file):
-    fig = plt.figure()
-    plt.rc('grid', linestyle='-', color='black')
-    plt.title('Number of Components Retained vs Performance')
-    plt.xlabel('Number of Components')
-    plt.ylabel('Accuracy (%)')
-    plt.ylim(0, 100)
-    plt.grid(True)
+def plot_performance(performances, show_results=True, save_to_file=None):
+    pp = PdfPages("experiment-results/" + save_to_file + ".pdf")
+    for performance in performances:
+        fig = plt.figure()
+        plt.rc('grid', linestyle='-', color='black')
+        plt.title('Number of Components Retained vs Performance')
+        plt.xlabel('Number of Components')
+        plt.ylabel('Accuracy (%)')
+        plt.ylim(0, 100)
+        plt.grid(True)
 
-    plt.plot(performance.keys(), performance.values())
-    if show_results:
-        plt.show()
-    if save_to_file:
-        pp = PdfPages("experiment-results/" + save_to_file + ".pdf")
-        pp.savefig(fig)
-        pp.close()
+        plt.plot(performance.keys(), performance.values())
+        if show_results:
+            plt.show()
+        if save_to_file:
+            pp.savefig(fig)
+    pp.close()
