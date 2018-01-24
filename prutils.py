@@ -72,7 +72,7 @@ Running PCA experiments
 def _single_PCA(n, classifier, dataframe, batch):
     if batch:
         p = 0
-        for _ in range(100):
+        for _ in range(50):
             data = get_random_batch(dataframe)
             pca = PCA(n_components=n).fit(data[0], data[2])
             p += estimate_classifier_performance(classifier.fit(pca.transform(data[0]), data[2]), pca.transform(data[1]), data[3])
@@ -164,10 +164,12 @@ Handling experiment results
 """
 def handle_plot(performance, show_results, save_to_file):
     fig = plt.figure()
+    plt.rc('grid', linestyle='-', color='black')
     plt.title('Number of Components Retained vs Performance')
     plt.xlabel('Number of Components')
     plt.ylabel('Accuracy (%)')
     plt.ylim(0, 100)
+    plt.grid(True)
 
     plt.plot(performance.keys(), performance.values())
     if show_results:
