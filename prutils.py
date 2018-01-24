@@ -96,6 +96,7 @@ def run_PCA_experiment(classifier, data_file, max_components = 40, batch=False, 
     dataframe = pd.read_csv(data_file)
     if max_components is 'auto':
         return _run_PCA_auto(classifier, dataframe, batch)
+    max_components = min(len(dataframe.columns)-1, max_components)
     single_run = partial(_single_PCA, classifier=classifier, dataframe=dataframe, batch=batch)
     pool = Pool(mp.cpu_count())
     performance = dict(pool.map(single_run, range(1, max_components)))
@@ -124,6 +125,7 @@ def _single_ICA(n, classifier, dataframe, batch):
 
 def run_ICA_experiment(classifier, data_file, max_components = 20, batch=False,  show_results=False, save_to_file=False):
     dataframe = pd.read_csv(data_file)
+    max_components = min(len(dataframe.columns)-1, max_components)
     pool = Pool(mp.cpu_count())
     single_run = partial(_single_ICA, classifier=classifier, dataframe=dataframe, batch=batch)
     performance = dict(pool.map(single_run, range(1, max_components)))
@@ -152,6 +154,7 @@ def _single_KPCA(n, classifier, dataframe, batch):
 def run_KPCA_experiment(classifier, data_file, max_components = 20, batch=False,  show_results=False, save_to_file=False):
     dataframe = pd.read_csv(data_file)
     performance = []
+    max_components = min(len(dataframe.columns)-1, max_components)
     single_run = partial(_single_KPCA, classifier=classifier, dataframe=dataframe, batch=batch)
     for c in range(1, max_components):
         performance.append(single_run(c))
