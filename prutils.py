@@ -72,11 +72,11 @@ Running PCA experiments
 def _single_PCA(n, classifier, dataframe, batch):
     if batch:
         p = 0
-        for _ in range(50):
+        for _ in range(20):
             data = get_random_batch(dataframe)
             pca = PCA(n_components=n).fit(data[0], data[2])
             p += estimate_classifier_performance(classifier.fit(pca.transform(data[0]), data[2]), pca.transform(data[1]), data[3])
-        p = p/100.0
+        p = p/20.0
     else:
         data = get_full_data(dataframe)
         pca = PCA(n_components=n).fit(data[0], data[2])
@@ -111,11 +111,11 @@ Code for running ICAs
 def _single_ICA(n, classifier, dataframe, batch):
     if batch:
         p = 0
-        for _ in range(100):
+        for _ in range(20):
             data = get_random_batch(dataframe)
             ica = FastICA(n_components=n, max_iter=1000).fit(data[0], data[2])
             p += estimate_classifier_performance(classifier.fit(ica.transform(data[0]), data[2]), ica.transform(data[1]), data[3])
-        p = p/100.0
+        p = p/20.0
     else:
         data = get_full_data(dataframe)
         ica = FastICA(n_components=n, max_iter=1000).fit(data[0], data[2])
@@ -138,11 +138,11 @@ Code for running KernelPCA
 def _single_KPCA(n, classifier, dataframe, batch):
     if batch:
         p = 0
-        for _ in range(100):
+        for _ in range(20):
             data = get_random_batch(dataframe)
             kpca = KernelPCA(n_components=n).fit(data[0], data[2])
             p += estimate_classifier_performance(classifier.fit(kpca.transform(data[0]), data[2]), kpca.transform(data[1]), data[3])
-        p = p/100.0
+        p = p/20.0
     else:
         data = get_full_data(dataframe)
         kpca = KernelPCA(n_components=n).fit(data[0], data[2])
