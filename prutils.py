@@ -12,6 +12,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from multiprocessing import Pool
 from functools import partial
+from tqdm import tqdm
 
 """
 Dataset constants
@@ -98,7 +99,7 @@ def run_PCA_experiment(classifier, data_file, max_components = 40, batch=False):
         return _run_PCA_auto(classifier, dataframe, batch)
     max_components = min(len(dataframe.columns)-1, max_components)
     single_run = partial(_single_PCA, classifier=classifier, dataframe=dataframe, batch=batch)
-    pool = Pool(mp.cpu_count())
+    pool = Pool(mp.cpu_count()-1)
     performance = dict(pool.map(single_run, range(1, max_components)))
     pool.close()
     pool.join()
@@ -125,7 +126,7 @@ def _single_ICA(n, classifier, dataframe, batch):
 def run_ICA_experiment(classifier, data_file, max_components = 20, batch=False):
     dataframe = pd.read_csv(data_file)
     max_components = min(len(dataframe.columns)-1, max_components)
-    pool = Pool(mp.cpu_count())
+    pool = Pool(mp.cpu_count()-1)
     single_run = partial(_single_ICA, classifier=classifier, dataframe=dataframe, batch=batch)
     performance = dict(pool.map(single_run, range(1, max_components)))
     pool.close()
@@ -154,7 +155,7 @@ def run_KPCA_experiment(classifier, data_file, max_components = 20, batch=False)
     performance = []
     max_components = min(len(dataframe.columns)-1, max_components)
     single_run = partial(_single_KPCA, classifier=classifier, dataframe=dataframe, batch=batch)
-    for c in range(1, max_components):
+    for c in tqdm(range(1, max_components)):
         performance.append(single_run(c))
     performance = dict(performance)
     return performance
