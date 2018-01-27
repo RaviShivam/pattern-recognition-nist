@@ -7,7 +7,7 @@ max_height = 600
 max_width = 800
 
 
-def separate_handwritten_digits(im_file='digits.jpeg', imshow=False):
+def separate_handwritten_digits(im_file='data/digits.jpeg', imshow=False):
     im_gray = cv2.imread(im_file, cv2.IMREAD_GRAYSCALE)
     if im_gray is None:
         print 'Cannot find image "{}", did you forget to specify the directory?'.format(im_file)
@@ -73,7 +73,7 @@ def separate_handwritten_digits(im_file='digits.jpeg', imshow=False):
 
     fil = open("self-digits.csv", 'wb')
     for r in data:
-        fil.write(str(r).strip("[]"))
+        fil.write(str(r).strip("[]") + '\n')
 
     fil.close()
 
