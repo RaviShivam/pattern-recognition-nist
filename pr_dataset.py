@@ -21,12 +21,38 @@ def plot_image(data_to_display, rows, cells, index, size=DESIRED_SQUARE_SIZE):
     plt.imshow(img, cmap='gray', interpolation='none')
 
 
-def __get_raw_pr_dataset(train_dataset=True):
-    if train_dataset:
+def __get_raw_pr_dataset(train_dataset='train'):
+    if train_dataset == 'self':
+        df = pd.DataFrame()
+
+        with open('data/self-digits.csv', 'r') as f:
+            for line in f:
+                df = pd.concat([df, pd.DataFrame([tuple(line.strip().split(','))])], ignore_index=True)
+
+        # df = pd.read_csv('data/self-digits.csv', sep=',')
+
+        raw_data = np.array(df.values)
+
+        labels = raw_data[:, 0]
+        labels = labels.astype(np.int)
+
+        sizes = raw_data[:, (1, 2)]
+        sizes = sizes.astype(np.int)
+        sizes[:, [0, 1]] = sizes[:, [1, 0]]
+
+        original_data = raw_data[:, 3:]
+
+        data = np.empty(original_data.shape)
+        for (i, row) in enumerate(original_data):
+            row = row.flatten()
+            data[i, 0:row.shape[0]] = row
+
+        return labels, sizes, data
+
+    elif train_dataset == 'train':
         df = pd.read_csv('file2.csv', sep=',')
     else:
         df = pd.read_csv('data/nist_eval.csv', sep=',')
-
 
     raw_data = np.array(df.values)
     np.random.shuffle(raw_data)
@@ -46,19 +72,19 @@ def __get_raw_pr_dataset(train_dataset=True):
         row = row.flatten()
         data[i, 0:row.shape[0]] = row
 
-    # print(data[1].shape)
+        # print(data[1].shape)
 
-    # for i in range(9):
-    #     img = data[i]
-    #     size = sizes[i]
-    #     img = img[0:(size[0] * size[1])]
-    #     # reshaping to rectangle shape
-    #     img = img.reshape(size[0], size[1])
-    #     plt.subplot(3, 3, i + 1)
-    #     plt.imshow(img, cmap='gray', interpolation='none')
-    #     plt.title("Class {}".format(labels[i]))
-    #
-    # plt.show()
+        # for i in range(9):
+        #     img = data[i]
+        #     size = sizes[i]
+        #     img = img[0:(size[0] * size[1])]
+        #     # reshaping to rectangle shape
+        #     img = img.reshape(size[0], size[1])
+        #     plt.subplot(3, 3, i + 1)
+        #     plt.imshow(img, cmap='gray', interpolation='none')
+        #     plt.title("Class {}".format(labels[i]))
+        #
+        # plt.show()
 
     return labels, sizes, data
 
@@ -171,7 +197,7 @@ def __sharpen_image(data):
     return sharp_images
 
 
-def get_preprocessed_dataset(train_dataset=True, plot=False):
+def get_preprocessed_dataset(train_dataset='train', plot=False):
     (labels, sizes, data) = __get_raw_pr_dataset(train_dataset)
 
     data = __get_squared_dataset(sizes, data)
@@ -194,14 +220,14 @@ def get_preprocessed_dataset(train_dataset=True, plot=False):
     return labels, data, size_tuple
 
 
-def save_dataset_to_csv(train_dataset=True):
+def save_dataset_to_csv(train_dataset='train', name="tmp"):
     labels, data, size_tuple = get_preprocessed_dataset(train_dataset=train_dataset)
     full_data = np.zeros((labels.shape[0], 1 + data.shape[1]), np.int32)
     full_data[:, 0] = labels[:]
     full_data[:, 1:] = data.astype(int)
-    np.savetxt("data/preprocessed_test_nist_data.csv", full_data, delimiter=",", fmt='%d')
+    np.savetxt("data/" + name + ".csv", full_data, delimiter=",", fmt='%d')
     print('saved to csv', full_data.shape)
 
 
 # get_preprocessed_dataset(True)
-save_dataset_to_csv(train_dataset=False)
+save_dataset_to_csv(train_dataset='self', name="preprocessed_self_digits")
